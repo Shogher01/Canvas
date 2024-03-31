@@ -1,10 +1,12 @@
-import React, { useRef, useState  } from 'react';
+import React, { useRef, useState } from 'react';
 
 const DrawingCanvas = () => {
     const canvasRef = useRef(null);
     const [drawMode, setDrawMode] = useState(false);
+    const [showThicknessOptions, setShowThicknessOptions] = useState(false);
+    const [thickness, setThickness] = useState(1);
     const [drawRectMode, setDrawRectMode] = useState(false);
-    const [eraserMode, setEraserMode] = useState(false); // State for eraser mode
+    const [eraserMode, setEraserMode] = useState(false);
     const [isDrawing, setIsDrawing] = useState(false);
     const [isDrawingRect, setIsDrawingRect] = useState(false);
     const [startRectCoords, setStartRectCoords] = useState({ x: 0, y: 0 });
@@ -12,49 +14,47 @@ const DrawingCanvas = () => {
     const [drawnObjects, setDrawnObjects] = useState([]);
 
     const toggleDrawMode = () => {
-        setDrawMode(!drawMode);
-        setEraserMode(false); // Disable eraser mode when toggling draw mode
-        setDrawRectMode(false); // Ensure rectangle draw mode is off when toggling draw mode
+        const newDrawMode = !drawMode;
+        setDrawMode(newDrawMode);
+        setEraserMode(false);
+        setDrawRectMode(false);
+        setShowThicknessOptions(newDrawMode); // Show thickness options when enabling draw mode
     };
-
 
     const toggleDrawRectMode = () => {
         const newDrawRectMode = !drawRectMode;
         setDrawRectMode(newDrawRectMode);
-        setEraserMode(false); // Disable eraser mode when toggling rectangle draw mode
+        setEraserMode(false);
+        setShowThicknessOptions(false); // Hide thickness options when toggling draw rect mode
         if (newDrawRectMode) {
-            setDrawMode(false); // Ensure draw mode is off when toggling rectangle draw mode
+            setDrawMode(false);
         }
     };
 
     const toggleEraserMode = () => {
         const newEraserMode = !eraserMode;
         setEraserMode(newEraserMode);
+        setShowThicknessOptions(false); // Hide thickness options when toggling eraser mode
         if (newEraserMode) {
-            setDrawMode(false); // Disable draw mode
-            setDrawRectMode(false); // Disable rectangle draw mode
+            setDrawMode(false);
+            setDrawRectMode(false);
         }
     };
-
-
 
     const startDrawing = (e) => {
         if (!drawMode && !drawRectMode && !eraserMode) return;
         setIsDrawing(true);
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        if (drawMode || drawRectMode) {
-            ctx.lineWidth = 2; // Set your desired default line width for drawing and rectangles
-            ctx.strokeStyle = 'black'; // Set your desired stroke color
-        }
         ctx.beginPath();
+        ctx.lineWidth = thickness; // Apply the selected thickness
+        ctx.strokeStyle = 'black'; // Set your desired stroke color for drawing and rectangles
         ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
         if (drawRectMode) {
-            setIsDrawingRect(true); // Only set isDrawingRect here
+            setIsDrawingRect(true);
             setStartRectCoords({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
         }
     };
-
 
     const draw = (e) => {
         if (!isDrawing) return;
@@ -63,12 +63,11 @@ const DrawingCanvas = () => {
         const ctx = canvas.getContext('2d');
 
         if (eraserMode) {
-            // Eraser functionality
-            ctx.globalCompositeOperation = 'destination-out'; // Set operation to erase
-            ctx.lineWidth = 10; // Eraser size
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = 10;
             ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
             ctx.stroke();
-            ctx.globalCompositeOperation = 'source-over'; // Reset to default drawing operation
+            ctx.globalCompositeOperation = 'source-over';
         } else if (drawRectMode && isDrawingRect) {
             setCurrentMousePosition({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
             return;
@@ -92,15 +91,21 @@ const DrawingCanvas = () => {
             }]);
         }
         setIsDrawing(false);
-        setIsDrawingRect(false); // Reset isDrawingRect to false here for all modes
+        setIsDrawingRect(false);
+    };
+
+
+    const selectThickness = (selectedThickness) => {
+        setThickness(selectedThickness);
+        setShowThicknessOptions(false); // Optionally hide the selector after selection
     };
 
     return (
         <div>
             <h1 style={{ color: 'black' }}>Simple Drawing Canvas</h1>
-            <div style={{ marginBottom: '20px' }}> {/* Container for tools */}
+            <div style={{ marginBottom: '20px' }}>
                 <div
-                    className="tool"
+                    className="pencil"
                     onClick={toggleDrawMode}
                     style={{
                         cursor: 'pointer',
@@ -111,10 +116,18 @@ const DrawingCanvas = () => {
                         background: drawMode ? 'DarkTurquoise' : 'transparent',
                     }}
                 >
-                    <div style={{ color: 'black' }}>✎</div>
-                </div>
+                    ✎
+                </div >
+                {showThicknessOptions && (
+                    <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px', marginRight:'1200px' }}>
+                        {/* Custom UI for selecting thickness */}
+                        <div onClick={() => selectThickness(1)} style={{ height: '2px', background: 'black', marginBottom: '5px' }}></div>
+                        <div onClick={() => selectThickness(5)} style={{ height: '5px', background: 'black', marginBottom: '5px' }}></div>
+                        <div onClick={() => selectThickness(10)} style={{ height: '10px', background: 'black', marginBottom: '5px' }}></div>
+                    </div>
+                )}
                 <div
-                    className="tool"
+                    className="rectangle"
                     onClick={toggleDrawRectMode}
                     style={{
                         cursor: 'pointer',
@@ -128,7 +141,7 @@ const DrawingCanvas = () => {
                     <div style={{ color: 'black' }}>◻️</div>
                 </div>
                 <div
-                    className="tool"
+                    className="eraser"
                     onClick={toggleEraserMode}
                     style={{
                         cursor: 'pointer',
