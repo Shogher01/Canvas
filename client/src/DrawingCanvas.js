@@ -12,6 +12,7 @@ const DrawingCanvas = () => {
     const [startRectCoords, setStartRectCoords] = useState({ x: 0, y: 0 });
     const [currentMousePosition, setCurrentMousePosition] = useState({ x: 0, y: 0 });
     const [drawnObjects, setDrawnObjects] = useState([]);
+    const [selectedColor, setSelectedColor] = useState('#000000');
 
     const toggleDrawMode = () => {
         const newDrawMode = !drawMode;
@@ -54,6 +55,8 @@ const DrawingCanvas = () => {
             setIsDrawingRect(true);
             setStartRectCoords({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
         }
+        ctx.strokeStyle = selectedColor; // Use the selected color for drawing
+        ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
     };
 
     const draw = (e) => {
@@ -118,6 +121,7 @@ const DrawingCanvas = () => {
                 >
                     ✎
                 </div >
+
                 {showThicknessOptions && (
                     <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px', marginRight:'1200px' }}>
                         {/* Custom UI for selecting thickness */}
@@ -126,6 +130,14 @@ const DrawingCanvas = () => {
                         <div onClick={() => selectThickness(10)} style={{ height: '10px', background: 'black', marginBottom: '5px' }}></div>
                     </div>
                 )}
+                {/* Color Picker */}
+                <input
+                    type="color"
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    style={{ marginLeft: '10px' }}
+                />
+
                 <div
                     className="rectangle"
                     onClick={toggleDrawRectMode}
