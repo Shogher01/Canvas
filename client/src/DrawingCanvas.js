@@ -1,9 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect  } from 'react';
+import eraserIcon from './icons/eraser.png';
 
 const DrawingCanvas = () => {
-    const canvasRef = useRef();
+    const canvasRef = useRef(null);
     const [drawMode, setDrawMode] = useState(false);
     const [drawRectMode, setDrawRectMode] = useState(false);
+    const [eraserMode, setEraserMode] = useState(false); // State for eraser mode
     const [isDrawing, setIsDrawing] = useState(false);
     const [isDrawingRect, setIsDrawingRect] = useState(false);
     const [startRectCoords, setStartRectCoords] = useState({ x: 0, y: 0 });
@@ -12,21 +14,38 @@ const DrawingCanvas = () => {
 
     const toggleDrawMode = () => {
         setDrawMode(!drawMode);
-        if (drawMode) {
-            setDrawRectMode(false); // Ensure rectangle draw mode is off when toggling draw mode
-        }
+        setEraserMode(false); // Disable eraser mode when toggling draw mode
+        setDrawRectMode(false); // Ensure rectangle draw mode is off when toggling draw mode
     };
+
 
     const toggleDrawRectMode = () => {
         const newDrawRectMode = !drawRectMode;
         setDrawRectMode(newDrawRectMode);
+        setEraserMode(false); // Disable eraser mode when toggling rectangle draw mode
         if (newDrawRectMode) {
             setDrawMode(false); // Ensure draw mode is off when toggling rectangle draw mode
         }
     };
 
+    const toggleEraserMode = () => {
+        const newEraserMode = !eraserMode;
+        setEraserMode(newEraserMode);
+        if (newEraserMode) {
+            setDrawMode(false); // Disable draw mode
+            setDrawRectMode(false); // Disable rectangle draw mode
+        }
+    };
+
+    useEffect(() => {
+        if (canvasRef.current) {
+            canvasRef.current.style.cursor = eraserMode ? `url(${eraserIcon}), auto` : "default";
+        }
+    }, [eraserMode]);
+
+
     const startDrawing = (e) => {
-        if (!drawMode && !drawRectMode) return;
+        if (!drawMode && !drawRectMode && !eraserMode) return;
         setIsDrawing(true);
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
@@ -38,13 +57,21 @@ const DrawingCanvas = () => {
         }
     };
 
+
     const draw = (e) => {
         if (!isDrawing) return;
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
 
-        if (drawRectMode && isDrawingRect) {
+        if (eraserMode) {
+            // Eraser functionality
+            ctx.globalCompositeOperation = 'destination-out'; // Set operation to erase
+            ctx.lineWidth = 10; // Eraser size
+            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.stroke();
+            ctx.globalCompositeOperation = 'source-over'; // Reset to default drawing operation
+        } else if (drawRectMode && isDrawingRect) {
             setCurrentMousePosition({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
             return;
         } else if (drawMode) {
@@ -65,43 +92,57 @@ const DrawingCanvas = () => {
                 x2: currentMousePosition.x,
                 y2: currentMousePosition.y,
             }]);
-            if (!drawRectMode) {
-                setIsDrawingRect(false); // Only reset if we're not in drawRectMode anymore
-            }
         }
         setIsDrawing(false);
+        setIsDrawingRect(false); // Reset isDrawingRect to false here for all modes
     };
 
     return (
         <div>
             <h1 style={{ color: 'black' }}>Simple Drawing Canvas</h1>
-            <div
-                className="tool"
-                onClick={toggleDrawMode}
-                style={{
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    display: 'inline-block',
-                    marginRight: '10px',
-                    fontSize: '24px',
-                    background: drawMode ? 'DarkTurquoise' : 'transparent',
-                }}
-            >
-                <div style={{ color: 'black' }}>✎</div>
-            </div>
-            <div
-                className="tool"
-                onClick={toggleDrawRectMode}
-                style={{
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    display: 'inline-block',
-                    marginRight: '10px',
-                    fontSize: '24px',
-                    background: drawRectMode ? 'DarkTurquoise' : 'transparent',
-                }}
-            >
-                <div style={{ color: 'black' }}>◻️</div>
+            <div style={{ marginBottom: '20px' }}> {/* Container for tools */}
+                <div
+                    className="tool"
+                    onClick={toggleDrawMode}
+                    style={{
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        display: 'inline-block',
+                        marginRight: '10px',
+                        fontSize: '24px',
+                        background: drawMode ? 'DarkTurquoise' : 'transparent',
+                    }}
+                >
+                    <div style={{ color: 'black' }}>✎</div>
+                </div>
+                <div
+                    className="tool"
+                    onClick={toggleDrawRectMode}
+                    style={{
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        display: 'inline-block',
+                        marginRight: '10px',
+                        fontSize: '24px',
+                        background: drawRectMode ? 'DarkTurquoise' : 'transparent',
+                    }}
+                >
+                    <div style={{ color: 'black' }}>◻️</div>
+                </div>
+                <div
+                    className="tool"
+                    onClick={toggleEraserMode}
+                    style={{
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        display: 'inline-block',
+                        marginRight: '10px',
+                        fontSize: '24px',
+                        background: eraserMode ? 'DarkTurquoise' : 'transparent',
+                    }}
+                >
+                    <div style={{ color: 'black' }}>▯</div>
+                </div>
             </div>
             <canvas
                 id="myCanvas"
@@ -128,3 +169,13 @@ const DrawingCanvas = () => {
 };
 
 export default DrawingCanvas;
+
+
+
+
+
+
+
+
+
+
