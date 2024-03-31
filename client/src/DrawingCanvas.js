@@ -10,19 +10,24 @@ const DrawingCanvas = () => {
     const [currentMousePosition, setCurrentMousePosition] = useState({ x: 0, y: 0 });
     const [drawnObjects, setDrawnObjects] = useState([]);
 
+    const deleteRectangle = (id) => {
+        setDrawnObjects((prevObjects) => {
+            // Filter out the rectangle with the specified ID from drawnObjects
+            const updatedObjects = prevObjects.filter((object) => object.id !== id);
+            return updatedObjects;
+        });
+    };
+
     const toggleDrawMode = () => {
         setDrawMode(!drawMode);
-        if (drawMode) {
-            setDrawRectMode(false); // Ensure rectangle draw mode is off when toggling draw mode
-        }
+        setDrawRectMode(false);
+        setIsDrawingRect(false);
     };
 
     const toggleDrawRectMode = () => {
-        const newDrawRectMode = !drawRectMode;
-        setDrawRectMode(newDrawRectMode);
-        if (newDrawRectMode) {
-            setDrawMode(false); // Ensure draw mode is off when toggling rectangle draw mode
-        }
+        setDrawRectMode(!drawRectMode);
+        setDrawMode(false);
+        setIsDrawingRect(true);
     };
 
     const startDrawing = (e) => {
@@ -33,21 +38,21 @@ const DrawingCanvas = () => {
         ctx.beginPath();
         ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
         if (drawRectMode) {
-            setIsDrawingRect(true); // Only set isDrawingRect here
+
             setStartRectCoords({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
         }
     };
 
     const draw = (e) => {
-        if (!isDrawing) return;
+        if (!drawMode && !drawRectMode || !isDrawing) return;
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
 
-        if (drawRectMode && isDrawingRect) {
+        if (drawRectMode) {
             setCurrentMousePosition({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
             return;
-        } else if (drawMode) {
+        } else {
             ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
             ctx.stroke();
         }
@@ -57,7 +62,10 @@ const DrawingCanvas = () => {
         if (isDrawingRect) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
+            // Finalize the rectangle drawing
             ctx.strokeRect(startRectCoords.x, startRectCoords.y, currentMousePosition.x - startRectCoords.x, currentMousePosition.y - startRectCoords.y);
+
+            // Add the rectangle to the drawnObjects array
             setDrawnObjects([...drawnObjects, {
                 type: 'rectangle',
                 x1: startRectCoords.x,
@@ -65,11 +73,9 @@ const DrawingCanvas = () => {
                 x2: currentMousePosition.x,
                 y2: currentMousePosition.y,
             }]);
-            if (!drawRectMode) {
-                setIsDrawingRect(false); // Only reset if we're not in drawRectMode anymore
-            }
         }
         setIsDrawing(false);
+        setIsDrawingRect(false); // Reset drawing rectangle flag
     };
     return (
         <div>
@@ -100,7 +106,7 @@ const DrawingCanvas = () => {
                     background: drawRectMode ? 'DarkTurquoise' : 'transparent',
                 }}
             >
-                <div style={{ color: 'black' }}>◻️</div>
+                <div style={{ color: 'black' }}>◻</div>
             </div>
             <canvas
                 id="myCanvas"
