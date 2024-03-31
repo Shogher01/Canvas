@@ -1,5 +1,4 @@
-import React, { useRef, useState, useEffect  } from 'react';
-import eraserIcon from './icons/eraser.png';
+import React, { useRef, useState  } from 'react';
 
 const DrawingCanvas = () => {
     const canvasRef = useRef(null);
@@ -37,11 +36,6 @@ const DrawingCanvas = () => {
         }
     };
 
-    useEffect(() => {
-        if (canvasRef.current) {
-            canvasRef.current.style.cursor = eraserMode ? `url(${eraserIcon}), auto` : "default";
-        }
-    }, [eraserMode]);
 
 
     const startDrawing = (e) => {
@@ -49,6 +43,10 @@ const DrawingCanvas = () => {
         setIsDrawing(true);
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
+        if (drawMode || drawRectMode) {
+            ctx.lineWidth = 2; // Set your desired default line width for drawing and rectangles
+            ctx.strokeStyle = 'black'; // Set your desired stroke color
+        }
         ctx.beginPath();
         ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
         if (drawRectMode) {
