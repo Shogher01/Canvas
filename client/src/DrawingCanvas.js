@@ -6,6 +6,7 @@ const DrawingCanvas = () => {
     const [showThicknessOptions, setShowThicknessOptions] = useState(false);
     const [thickness, setThickness] = useState(1);
     const [drawRectMode, setDrawRectMode] = useState(false);
+    const [drawCircleMode, setDrawCircleMode] = useState(false);
     const [eraserMode, setEraserMode] = useState(false);
     const [isDrawing, setIsDrawing] = useState(false);
     const [isDrawingRect, setIsDrawingRect] = useState(false);
@@ -13,55 +14,60 @@ const DrawingCanvas = () => {
     const [currentMousePosition, setCurrentMousePosition] = useState({ x: 0, y: 0 });
     const [drawnObjects, setDrawnObjects] = useState([]);
     const [selectedColor, setSelectedColor] = useState('#000000');
-    const [currentLine, setCurrentLine] = useState([]);
+    const [circleCenter, setCircleCenter] = useState({ x: 0, y: 0 }); // State for circle center
+    const [circleRadius, setCircleRadius] = useState(0); // State for circle radius
 
     const toggleDrawMode = () => {
         const newDrawMode = !drawMode;
         setDrawMode(newDrawMode);
         setEraserMode(false);
         setDrawRectMode(false);
-        setShowThicknessOptions(newDrawMode); // Show thickness options when enabling draw mode
+        setDrawCircleMode(false);
+        setShowThicknessOptions(newDrawMode);
     };
 
     const toggleDrawRectMode = () => {
-        const newDrawRectMode = !drawRectMode;
-        setDrawRectMode(newDrawRectMode);
-        setEraserMode(false);
-        setShowThicknessOptions(false); // Hide thickness options when toggling draw rect mode
-        if (newDrawRectMode) {
-            setDrawMode(false);
-        }
+        setDrawRectMode(!drawRectMode);
+        setDrawCircleMode(false);
+        setDrawMode(false);
+        setEraserMode(false); // Ensure eraser mode is turned off
+        setShowThicknessOptions(false);
+    };
+
+    const toggleDrawCircleMode = () => {
+        setDrawCircleMode(!drawCircleMode);
+        setDrawRectMode(false);
+        setDrawMode(false);
+        setEraserMode(false); // Ensure eraser mode is turned off
+        setShowThicknessOptions(false);
     };
 
     const toggleEraserMode = () => {
         const newEraserMode = !eraserMode;
         setEraserMode(newEraserMode);
-        setShowThicknessOptions(false); // Hide thickness options when toggling eraser mode
+        setShowThicknessOptions(false);
         if (newEraserMode) {
             setDrawMode(false);
             setDrawRectMode(false);
+            setDrawCircleMode(false);
         }
     };
 
     const startDrawing = (e) => {
-        if (!drawMode && !drawRectMode && !eraserMode) return;
+        if (!drawMode && !drawRectMode && !drawCircleMode && !eraserMode) return;
         setIsDrawing(true);
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        const canvasRect = canvas.getBoundingClientRect(); // Get the position of the canvas relative to the window
-        const offsetX = e.clientX - canvasRect.left; // Adjust for the canvas offset
-        const offsetY = e.clientY - canvasRect.top; // Adjust for the canvas offset
         ctx.beginPath();
-        ctx.lineWidth = thickness; // Apply the selected thickness
-        ctx.strokeStyle = selectedColor; // Use the selected color for drawing
-        setCurrentLine([{ x: offsetX, y: offsetY }]);
-        if (drawRectMode) {
+        ctx.lineWidth = thickness;
+        ctx.strokeStyle = 'black';
+        ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        if (drawRectMode || drawCircleMode) {
             setIsDrawingRect(true);
-            setStartRectCoords({ x: offsetX, y: offsetY });
+            setStartRectCoords({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
         }
-        if (!drawRectMode && !eraserMode) {
-            setCurrentMousePosition({ x: offsetX, y: offsetY });
-        }
+        ctx.strokeStyle = selectedColor;
+        ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
     };
 
     const draw = (e) => {
@@ -69,23 +75,27 @@ const DrawingCanvas = () => {
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        const canvasRect = canvas.getBoundingClientRect(); // Get the position of the canvas relative to the window
-        const offsetX = e.clientX - canvasRect.left; // Adjust for the canvas offset
-        const offsetY = e.clientY - canvasRect.top; // Adjust for the canvas offset
 
         if (eraserMode) {
             ctx.globalCompositeOperation = 'destination-out';
             ctx.lineWidth = 10;
-            ctx.lineTo(offsetX, offsetY);
+            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
             ctx.stroke();
             ctx.globalCompositeOperation = 'source-over';
         } else if (drawRectMode && isDrawingRect) {
-            setCurrentMousePosition({ x: offsetX, y: offsetY });
-            return;
+            setCurrentMousePosition({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
+        } else if (drawCircleMode && isDrawingRect) {
+            // Calculate the radius and center of the circle based on the start and current mouse positions
+            const radius = Math.sqrt(
+                Math.pow(e.clientX - canvas.offsetLeft - startRectCoords.x, 2) +
+                Math.pow(e.clientY - canvas.offsetTop - startRectCoords.y, 2)
+            );
+            const center = { x: startRectCoords.x, y: startRectCoords.y };
+            setCircleRadius(radius);
+            setCircleCenter(center);
         } else if (drawMode) {
-            ctx.lineTo(offsetX, offsetY);
+            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
             ctx.stroke();
-            setCurrentLine(prevLine => [...prevLine, { x: offsetX, y: offsetY }]);
         }
     };
 
@@ -93,26 +103,34 @@ const DrawingCanvas = () => {
         if (isDrawingRect) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
-            ctx.strokeRect(startRectCoords.x, startRectCoords.y, currentMousePosition.x - startRectCoords.x, currentMousePosition.y - startRectCoords.y);
-            setDrawnObjects([...drawnObjects, {
-                type: 'rectangle',
-                x1: startRectCoords.x,
-                y1: startRectCoords.y,
-                x2: currentMousePosition.x,
-                y2: currentMousePosition.y,
-            }]);
+            if (drawRectMode) {
+                ctx.strokeRect(startRectCoords.x, startRectCoords.y, currentMousePosition.x - startRectCoords.x, currentMousePosition.y - startRectCoords.y);
+                setDrawnObjects([...drawnObjects, {
+                    type: 'rectangle',
+                    x1: startRectCoords.x,
+                    y1: startRectCoords.y,
+                    x2: currentMousePosition.x,
+                    y2: currentMousePosition.y,
+                }]);
+            } else if (drawCircleMode) {
+                // Draw the circle
+                ctx.beginPath();
+                ctx.arc(circleCenter.x, circleCenter.y, circleRadius, 0, 2 * Math.PI);
+                ctx.stroke();
+                setDrawnObjects([...drawnObjects, {
+                    type: 'circle',
+                    center: { x: circleCenter.x, y: circleCenter.y },
+                    radius: circleRadius,
+                }]);
+            }
         }
         setIsDrawing(false);
         setIsDrawingRect(false);
-        if (drawMode && currentLine.length > 1) { // Only add line if it has more than one point
-            setDrawnObjects([...drawnObjects, { type: 'line', coordinates: currentLine }]);
-        }
-        setCurrentLine([]); // Reset currentLine regardless of whether it was added or not
     };
 
     const selectThickness = (selectedThickness) => {
         setThickness(selectedThickness);
-        setShowThicknessOptions(false); // Optionally hide the selector after selection
+        setShowThicknessOptions(false);
     };
 
     return (
@@ -132,17 +150,15 @@ const DrawingCanvas = () => {
                     }}
                 >
                     ✎
-                </div >
+                </div>
 
                 {showThicknessOptions && (
-                    <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px', marginRight:'1200px' }}>
-                        {/* Custom UI for selecting thickness */}
+                    <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px', marginRight: '1200px' }}>
                         <div onClick={() => selectThickness(1)} style={{ height: '2px', background: 'black', marginBottom: '5px' }}></div>
                         <div onClick={() => selectThickness(5)} style={{ height: '5px', background: 'black', marginBottom: '5px' }}></div>
                         <div onClick={() => selectThickness(10)} style={{ height: '10px', background: 'black', marginBottom: '5px' }}></div>
                     </div>
                 )}
-                {/* Color Picker */}
                 <input
                     type="color"
                     value={selectedColor}
@@ -165,6 +181,20 @@ const DrawingCanvas = () => {
                     <div style={{ color: 'black' }}>◻️</div>
                 </div>
                 <div
+                    className="circle"
+                    onClick={toggleDrawCircleMode}
+                    style={{
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        display: 'inline-block',
+                        marginRight: '10px',
+                        fontSize: '24px',
+                        background: drawCircleMode ? 'DarkTurquoise' : 'transparent',
+                    }}
+                >
+                    <div style={{ color: 'black' }}>⚬</div>
+                </div>
+                <div
                     className="eraser"
                     onClick={toggleEraserMode}
                     style={{
@@ -176,7 +206,7 @@ const DrawingCanvas = () => {
                         background: eraserMode ? 'DarkTurquoise' : 'transparent',
                     }}
                 >
-                    <div style={{ color: 'black' }}>▯</div>
+                    <div style={{ color: 'black' }}>▭</div> {/* Small rectangle icon */}
                 </div>
             </div>
             <canvas
@@ -190,16 +220,16 @@ const DrawingCanvas = () => {
                 onMouseUp={stopDrawing}
                 onMouseLeave={stopDrawing}
             ></canvas>
-            {/* Display the drawn objects */}
             <div>
                 <h2>Drawn Objects:</h2>
                 <ul>
                     {drawnObjects.map((object, index) => (
                         <li key={index}>
-                            {object.type === 'rectangle' ? (
-                                `Rectangle: (${object.x1}, ${object.y1}) to (${object.x2}, ${object.y2})`
-                            ) : (
-                                `Line: [${object.coordinates.map(coord => `(${coord.x}, ${coord.y})`).join(', ')}]`
+                            {object.type === 'rectangle' && (
+                                <div>Rectangle: {JSON.stringify(object)}</div>
+                            )}
+                            {object.type === 'circle' && (
+                                <div>Circle: Center({object.center.x}, {object.center.y}), Radius: {object.radius}</div>
                             )}
                         </li>
                     ))}
@@ -210,15 +240,3 @@ const DrawingCanvas = () => {
 };
 
 export default DrawingCanvas;
-
-
-
-
-
-
-
-
-
-
-
-
