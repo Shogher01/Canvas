@@ -13,6 +13,7 @@ const DrawingCanvas = () => {
     const [currentMousePosition, setCurrentMousePosition] = useState({ x: 0, y: 0 });
     const [drawnObjects, setDrawnObjects] = useState([]);
     const [selectedColor, setSelectedColor] = useState('#000000');
+    const [currentLine, setCurrentLine] = useState([]);
 
     const toggleDrawMode = () => {
         const newDrawMode = !drawMode;
@@ -47,16 +48,20 @@ const DrawingCanvas = () => {
         setIsDrawing(true);
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
+        const canvasRect = canvas.getBoundingClientRect(); // Get the position of the canvas relative to the window
+        const offsetX = e.clientX - canvasRect.left; // Adjust for the canvas offset
+        const offsetY = e.clientY - canvasRect.top; // Adjust for the canvas offset
         ctx.beginPath();
         ctx.lineWidth = thickness; // Apply the selected thickness
-        ctx.strokeStyle = 'black'; // Set your desired stroke color for drawing and rectangles
-        ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        ctx.strokeStyle = selectedColor; // Use the selected color for drawing
+        setCurrentLine([{ x: offsetX, y: offsetY }]);
         if (drawRectMode) {
             setIsDrawingRect(true);
-            setStartRectCoords({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
+            setStartRectCoords({ x: offsetX, y: offsetY });
         }
-        ctx.strokeStyle = selectedColor; // Use the selected color for drawing
-        ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        if (!drawRectMode && !eraserMode) {
+            setCurrentMousePosition({ x: offsetX, y: offsetY });
+        }
     };
 
     const draw = (e) => {
@@ -64,19 +69,23 @@ const DrawingCanvas = () => {
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
+        const canvasRect = canvas.getBoundingClientRect(); // Get the position of the canvas relative to the window
+        const offsetX = e.clientX - canvasRect.left; // Adjust for the canvas offset
+        const offsetY = e.clientY - canvasRect.top; // Adjust for the canvas offset
 
         if (eraserMode) {
             ctx.globalCompositeOperation = 'destination-out';
             ctx.lineWidth = 10;
-            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.lineTo(offsetX, offsetY);
             ctx.stroke();
             ctx.globalCompositeOperation = 'source-over';
         } else if (drawRectMode && isDrawingRect) {
-            setCurrentMousePosition({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
+            setCurrentMousePosition({ x: offsetX, y: offsetY });
             return;
         } else if (drawMode) {
-            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.lineTo(offsetX, offsetY);
             ctx.stroke();
+            setCurrentLine(prevLine => [...prevLine, { x: offsetX, y: offsetY }]);
         }
     };
 
@@ -95,8 +104,11 @@ const DrawingCanvas = () => {
         }
         setIsDrawing(false);
         setIsDrawingRect(false);
+        if (drawMode && currentLine.length > 1) { // Only add line if it has more than one point
+            setDrawnObjects([...drawnObjects, { type: 'line', coordinates: currentLine }]);
+        }
+        setCurrentLine([]); // Reset currentLine regardless of whether it was added or not
     };
-
 
     const selectThickness = (selectedThickness) => {
         setThickness(selectedThickness);
@@ -183,7 +195,13 @@ const DrawingCanvas = () => {
                 <h2>Drawn Objects:</h2>
                 <ul>
                     {drawnObjects.map((object, index) => (
-                        <li key={index}>{JSON.stringify(object)}</li>
+                        <li key={index}>
+                            {object.type === 'rectangle' ? (
+                                `Rectangle: (${object.x1}, ${object.y1}) to (${object.x2}, ${object.y2})`
+                            ) : (
+                                `Line: [${object.coordinates.map(coord => `(${coord.x}, ${coord.y})`).join(', ')}]`
+                            )}
+                        </li>
                     ))}
                 </ul>
             </div>
@@ -192,6 +210,8 @@ const DrawingCanvas = () => {
 };
 
 export default DrawingCanvas;
+
+
 
 
 
