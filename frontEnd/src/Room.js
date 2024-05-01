@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import Canvas from "./Canvas";
+import { FaEraser, FaPencilAlt, FaVectorSquare } from "react-icons/fa";
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
 const Room = ({ userNo, socket, setUsers, setUserNo }) => {
   const canvasRef = useRef(null);
@@ -12,7 +13,6 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
 
   useEffect(() => {
     socket.on("message", (data) => {
-      toast.info(data.message);
     });
   }, []);
   useEffect(() => {
@@ -25,7 +25,7 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
-    context.fillStyle = "white";
+    context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
     setElements([]);
   };
@@ -49,16 +49,14 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
     );
   };
   return (
-    <div className="container-fluid">
-      <div className="row">
-        <h1 className="display-5 pt-4 pb-3 text-center">
-          React Drawing App - users online:{userNo}
-        </h1>
-      </div>
-      <div className="row justify-content-center align-items-center text-center py-2">
-        <div className="col-md-2">
+    <div className="container-fluid" style={{ backgroundColor: "#ffffff", minHeight: "100vh" }}>
+      <h1 className="display-5 text-center pt-4 pb-3">
+          Host
+      </h1>
+      <div className="row justify-content-center align-items-center text-center py-4">
+        <div className="col-md-3">
           <div className="color-picker d-flex align-items-center justify-content-center">
-            Color Picker : &nbsp;
+            <span>Color Picker:</span>&nbsp;
             <input
               type="color"
               value={color}
@@ -66,6 +64,39 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
             />
           </div>
         </div>
+        <div className="col-md-6">
+          <div className="d-flex justify-content-between">
+            <div>
+              <button
+                type="button"
+                className="btn btn-primary btn-lg"
+                disabled={elements.length === 0}
+                onClick={undo}
+              >
+                <IoIosArrowBack />
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-lg ml-3"
+                disabled={history.length < 1}
+                onClick={redo}
+              >
+                <IoIosArrowForward />
+              </button>
+            </div>
+            <div>
+              <button
+                type="button"
+                className="btn btn-danger btn-lg"
+                onClick={clearCanvas}
+              >
+                <FaEraser />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="row justify-content-center align-items-center text-center py-4">
         <div className="col-md-3">
           <div className="form-check form-check-inline">
             <input
@@ -75,11 +106,10 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
               id="pencil"
               value="pencil"
               checked={tool === "pencil"}
-              onClick={(e) => setTool(e.target.value)}
-              readOnly={true}
+              onChange={(e) => setTool(e.target.value)}
             />
             <label className="form-check-label" htmlFor="pencil">
-              Pencil
+              <FaPencilAlt /> Pencil
             </label>
           </div>
           <div className="form-check form-check-inline">
@@ -90,11 +120,10 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
               id="line"
               value="line"
               checked={tool === "line"}
-              onClick={(e) => setTool(e.target.value)}
-              readOnly={true}
+              onChange={(e) => setTool(e.target.value)}
             />
             <label className="form-check-label" htmlFor="line">
-              Line
+              <IoIosArrowForward /> Line
             </label>
           </div>
           <div className="form-check form-check-inline">
@@ -105,42 +134,11 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
               id="rect"
               value="rect"
               checked={tool === "rect"}
-              onClick={(e) => setTool(e.target.value)}
-              readOnly={true}
+              onChange={(e) => setTool(e.target.value)}
             />
             <label className="form-check-label" htmlFor="rect">
-              Rectangle
+              <FaVectorSquare /> Rectangle
             </label>
-          </div>
-        </div>
-
-        <div className="col-md-2">
-          <button
-            type="button"
-            className="btn btn-outline-primary"
-            disabled={elements.length === 0}
-            onClick={() => undo()}
-          >
-            Undo
-          </button>
-          &nbsp;&nbsp;
-          <button
-            type="button"
-            className="btn btn-outline-primary ml-1"
-            disabled={history.length < 1}
-            onClick={() => redo()}
-          >
-            Redo
-          </button>
-        </div>
-        <div className="col-md-1">
-          <div className="color-picker d-flex align-items-center justify-content-center">
-            <input
-              type="button"
-              className="btn btn-danger"
-              value="clear canvas"
-              onClick={clearCanvas}
-            />
           </div>
         </div>
       </div>

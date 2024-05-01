@@ -61,7 +61,7 @@ io.on("connection", (socket) => {
 });
 
 // serve on port
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 server.listen(PORT, () =>
   console.log(`server is listening on http://localhost:${PORT}`)

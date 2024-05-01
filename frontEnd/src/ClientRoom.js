@@ -1,11 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import { toast } from "react-toastify";
 
 const ClientRoom = ({ userNo, socket, setUsers, setUserNo }) => {
   const imgRef = useRef(null);
   useEffect(() => {
     socket.on("message", (data) => {
-      toast.info(data.message);
     });
   }, []);
   useEffect(() => {
@@ -23,7 +21,7 @@ const ClientRoom = ({ userNo, socket, setUsers, setUserNo }) => {
     <div className="container-fluid">
       <div className="row pb-2">
         <h1 className="display-5 pt-4 pb-3 text-center">
-          React Drawing App - users online:{userNo}
+        Guest
         </h1>
       </div>
       <div className="row mt-5">
