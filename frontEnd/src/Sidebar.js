@@ -15,7 +15,7 @@ const Sidebar = ({ users, user, socket }) => {
       <button
         className="btn btn-dark btn-sm"
         onClick={openSideBar}
-        style={{ position: "absolute", top: "5%", left: "5%" }}
+        style={{backgroundColor: "hotpink",  position: "absolute", top: "5%", left: "5%" }}
       >
         Users
       </button>

@@ -22,7 +22,6 @@ app.get("/", (req, res) => {
   res.send("server");
 });
 
-// socket.io
 let imageUrl, userRoom;
 io.on("connection", (socket) => {
   socket.on("user-joined", (data) => {
@@ -31,13 +30,7 @@ io.on("connection", (socket) => {
     const user = userJoin(socket.id, userName, roomId, host, presenter);
     const roomUsers = getUsers(user.room);
     socket.join(user.room);
-    socket.emit("message", {
-      message: "Welcome to ChatRoom",
-    });
-    socket.broadcast.to(user.room).emit("message", {
-      message: `${user.username} has joined`,
-    });
-
+    
     io.to(user.room).emit("users", roomUsers);
     io.to(user.room).emit("canvasImage", imageUrl);
   });
@@ -51,12 +44,7 @@ io.on("connection", (socket) => {
     const userLeaves = userLeave(socket.id);
     const roomUsers = getUsers(userRoom);
 
-    if (userLeaves) {
-      io.to(userLeaves.room).emit("message", {
-        message: `${userLeaves.username} left the chat`,
-      });
-      io.to(userLeaves.room).emit("users", roomUsers);
-    }
+  
   });
 });
 
@@ -64,5 +52,5 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 5001;
 
 server.listen(PORT, () =>
-  console.log(`server is listening on http://localhost:${PORT}`)
+  console.log(`server is listening on http://192.168.1.102:${PORT}`)
 );

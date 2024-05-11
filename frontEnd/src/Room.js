@@ -12,10 +12,6 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
   const [tool, setTool] = useState("pencil");
 
   useEffect(() => {
-    socket.on("message", (data) => {
-    });
-  }, []);
-  useEffect(() => {
     socket.on("users", (data) => {
       setUsers(data);
       setUserNo(data.length);
@@ -39,6 +35,7 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
       prevElements.filter((ele, index) => index !== elements.length - 1)
     );
   };
+  
   const redo = () => {
     setElements((prevElements) => [
       ...prevElements,
@@ -48,10 +45,11 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
       prevHistory.filter((ele, index) => index !== history.length - 1)
     );
   };
+
   return (
     <div className="container-fluid" style={{ backgroundColor: "#ffffff", minHeight: "100vh" }}>
-      <h1 className="display-5 text-center pt-4 pb-3">
-          Host
+      <h1 className="display-5 text-center pt-4 pb-3" style={{ color: "hotpink" }}>
+        Canvas for creative people
       </h1>
       <div className="row justify-content-center align-items-center text-center py-4">
         <div className="col-md-3">
@@ -65,35 +63,35 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
           </div>
         </div>
         <div className="col-md-6">
-          <div className="d-flex justify-content-between">
-            <div>
-              <button
-                type="button"
-                className="btn btn-primary btn-lg"
-                disabled={elements.length === 0}
-                onClick={undo}
-              >
-                <IoIosArrowBack />
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-lg ml-3"
-                disabled={history.length < 1}
-                onClick={redo}
-              >
-                <IoIosArrowForward />
-              </button>
-            </div>
-            <div>
-              <button
-                type="button"
-                className="btn btn-danger btn-lg"
-                onClick={clearCanvas}
-              >
-                <FaEraser />
-              </button>
-            </div>
-          </div>
+          <div className="d-flex justify-content-center"> 
+            <button
+              type="button"
+              className="btn btn-dark btn-lg mx-2"
+              style={{ backgroundColor: "hotpink" }} 
+              disabled={elements.length === 0}
+              onClick={undo}
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              className="btn btn-dark btn-lg mx-2"
+              style={{ backgroundColor: "hotpink" }} 
+              disabled={history.length < 1}
+              onClick={redo}
+            >
+              Redo
+            </button>
+        </div>
+      </div>
+        <div className="col-md-3 text-right"> 
+          <button
+            type="button"
+            className="btn btn-danger btn-lg"
+            onClick={clearCanvas}
+          >
+            Clear All
+          </button>
         </div>
       </div>
       <div className="row justify-content-center align-items-center text-center py-4">

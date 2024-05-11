@@ -8,7 +8,7 @@ import Sidebar from "./Sidebar";
 
 import "./style.css";
 
-const server = "http://localhost:5001";
+const server = "http://192.168.1.102:5001";
 const connectionOptions = {
   "force new connection": true,
   reconnectionAttempts: "Infinity",

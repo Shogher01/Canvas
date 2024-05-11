@@ -13,26 +13,36 @@ const Canvas = ({
 }) => {
   const [isDrawing, setIsDrawing] = useState(false);
 
-  useEffect(() => {
+    useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.height = window.innerHeight * 2;
-    canvas.width = window.innerWidth * 2;
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
     const context = canvas.getContext("2d");
-
-    context.strokeWidth = 5;
-    context.scale(2, 2);
-    context.lineCap = "round";
-    context.strokeStyle = color;
-    context.lineWidth = 5;
     ctx.current = context;
+
+    const observer = new ResizeObserver(() => {
+      resizeCanvas(canvas, context);
+    });
+    observer.observe(canvas.parentElement);
+
+    resizeCanvas(canvas, context);
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
     ctx.current.strokeStyle = color;
   }, [color]);
 
+  const resizeCanvas = (canvas, context) => {
+    const parent = canvas.parentElement;
+    const { width, height } = parent.getBoundingClientRect();
+    canvas.width = width * 2; 
+    canvas.height = height * 2; 
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    context.scale(2, 2); 
+  };
   const handleMouseDown = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
 
