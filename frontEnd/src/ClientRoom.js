@@ -3,10 +3,6 @@ import React, { useEffect, useRef } from "react";
 const ClientRoom = ({ userNo, socket, setUsers, setUserNo }) => {
   const imgRef = useRef(null);
   useEffect(() => {
-    socket.on("message", (data) => {
-    });
-  }, []);
-  useEffect(() => {
     socket.on("users", (data) => {
       setUsers(data);
       setUserNo(data.length);
