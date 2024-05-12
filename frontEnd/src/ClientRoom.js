@@ -16,8 +16,8 @@ const ClientRoom = ({ userNo, socket, setUsers, setUserNo }) => {
   return (
     <div className="container-fluid">
       <div className="row pb-2">
-        <h1 className="display-5 pt-4 pb-3 text-center">
-        Guest
+        <h1 className="display-5 pt-4 pb-3 text-center" style={{ color: "hotpink" }}>
+        Guest 
         </h1>
       </div>
       <div className="row mt-5">

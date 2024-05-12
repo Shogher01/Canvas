@@ -10,7 +10,7 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
   const [elements, setElements] = useState([]);
   const [history, setHistory] = useState([]);
   const [tool, setTool] = useState("pencil");
-
+  const [newElements, setnewElements] = useState([]);
   useEffect(() => {
     socket.on("users", (data) => {
       setUsers(data);
@@ -23,20 +23,37 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
     const context = canvas.getContext("2d");
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
+    setHistory((prevHistory) => [
+      ...prevHistory,
+    ]);
+    setnewElements(elements);
     setElements([]);
   };
 
   const undo = () => {
-    setHistory((prevHistory) => [
+    if(newElements.length!==0){
+      setElements(newElements);
+      setHistory((prevHistory) => [
+      ...prevHistory,
+      newElements[newElements.length - 1],
+    ]);
+
+    }else {
+        setElements((prevElements) =>
+        prevElements.filter((ele, index) => index !== elements.length - 1)
+      );
+        setHistory((prevHistory) => [
       ...prevHistory,
       elements[elements.length - 1],
     ]);
-    setElements((prevElements) =>
-      prevElements.filter((ele, index) => index !== elements.length - 1)
-    );
+
+    }
+    console.log("Elements: "+elements);
+
   };
   
   const redo = () => {
+    console.log(history);
     setElements((prevElements) => [
       ...prevElements,
       history[history.length - 1],
@@ -68,7 +85,7 @@ const Room = ({ userNo, socket, setUsers, setUserNo }) => {
               type="button"
               className="btn btn-dark btn-lg mx-2"
               style={{ backgroundColor: "hotpink" }} 
-              disabled={elements.length === 0}
+              disabled={elements.length === 0 && newElements.length === 0}
               onClick={undo}
             >
               Undo
